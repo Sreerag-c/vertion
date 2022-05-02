@@ -5,6 +5,7 @@ import com.ayata.ayatamart.dto.response.UserResponse;
 import com.ayata.ayatamart.model.Role;
 import com.ayata.ayatamart.model.Token;
 import com.ayata.ayatamart.model.User;
+import com.ayata.ayatamart.model.UserRole;
 import com.ayata.ayatamart.repository.AuthRepository;
 import com.ayata.ayatamart.repository.RoleRepository;
 import com.ayata.ayatamart.repository.UserRepository;
@@ -13,6 +14,7 @@ import com.ayata.ayatamart.service.serviceimpl.UserServiceImpl;
 import org.aspectj.lang.annotation.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -30,24 +32,38 @@ class UserServiceTest {
     private UserRepository userRepository;
     @MockBean
     private AuthRepository authRepository;
+    @MockBean
+    private UserRoleRepository userRoleRepository;
+    @MockBean
+    private RoleRepository roleRepository;
 
 
     @BeforeEach
     public void beforeEach() {
         userRepository = Mockito.mock(UserRepository.class);
         authRepository = Mockito.mock(AuthRepository.class);
+        userRoleRepository = Mockito.mock(UserRoleRepository.class);
+        roleRepository = Mockito.mock(RoleRepository.class);
         userService = new UserServiceImpl();
         ReflectionTestUtils.setField(userService, "userRepository", userRepository);
         ReflectionTestUtils.setField(userService, "authRepository", authRepository);
-
+        ReflectionTestUtils.setField(userService,"userRoleRepository",userRoleRepository);
+        ReflectionTestUtils.setField(userService,"roleRepository",roleRepository);
     }
 
     @Test
     void currentLoginStatus() {
         User user = new User("sreerag.c@ayatacommerce.com", "123");
+        UserRole userRole = new UserRole(0,123,1);
+        Role role = new Role(1,"user");
         Optional<User> opUser = Optional.of(user);
-        Mockito.when(userRepository.findByUsernameAndPassword(Mockito.anyString(), Mockito.anyString()))
-                .thenReturn(opUser);
+        Optional<UserRole> opUserRole = Optional.of(userRole);
+        Optional<Role> opRole = Optional.of(role);
+//        Mockito.when(userRepository.findByUsernameAndPassword(Mockito.anyString(), Mockito.anyString()))
+//                .thenReturn(opUser);
+        Mockito.doReturn(opUser).when(userRepository).findByUsernameAndPassword(Mockito.anyString(), Mockito.anyString());
+        Mockito.doReturn(opUserRole).when(userRoleRepository).findByEmployeeId(Mockito.anyInt());
+        Mockito.doReturn(opRole).when(roleRepository).findByRoleId(Mockito.anyInt());
         UserResponse userResponse = userService.currentLoginStatus(user);
         assertEquals(userResponse.status, Status.SUCCESS);
     }
